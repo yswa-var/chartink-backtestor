@@ -1,16 +1,62 @@
-import streamlit as st
+from datetime import timedelta
+
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
+import yfinance as yf
+
+
+def backtest(df, days_forward_list):
+    df = df.sort_values('date')
+
+    results = []
+
+    for _, row in df.iterrows():
+        symbol = row['symbol']
+        date = row['date']
+
+        max_days = max(days_forward_list)
+        end_date = date + timedelta(days=max_days)
+
+        stock_data = yf.download(f"{symbol}.NS", start=date, end=end_date)
+
+        if not stock_data.empty:
+            result = {
+                'date': date,
+                'symbol': symbol,
+                'sector': row['sector'],
+                'marketcapname': row['marketcapname'],
+                'start price': float(stock_data.iloc[0]['Adj Close']),
+                'max high': float(stock_data['High'].max()),
+                'max low': float(stock_data['Low'].min())
+            }
+
+            for days in days_forward_list:
+                relevant_data = stock_data[:days]
+                if not relevant_data.empty:
+                    high_after_x_days = relevant_data['High'].max()
+                    low_after_x_days = relevant_data['Low'].min()
+
+                    result[f'high_after_{days}_days'] = high_after_x_days
+                    result[f'low_after_{days}_days'] = low_after_x_days
+                else:
+                    result[f'high_after_{days}_days'] = None
+                    result[f'low_after_{days}_days'] = None
+
+            results.append(result)
+
+    results_df = pd.DataFrame(results)
+
+    return results_df
 
 
 def calculate_percentage_change(row, column):
     return (row[column] - row['start price']) / row['start price'] * 100
 
 
-def process_data(df):
+def process_data(df, days_forward_list):
     # Calculate percentage changes
-    for days in [5, 10, 20, 30]:
+    for days in days_forward_list:
         df[f'high_{days}_days_change'] = df.apply(
             lambda row: calculate_percentage_change(row, f'high_after_{days}_days'), axis=1)
         df[f'low_{days}_days_change'] = df.apply(lambda row: calculate_percentage_change(row, f'low_after_{days}_days'),
@@ -75,12 +121,17 @@ def plot_marketcap_analysis(df):
 
 def main():
     st.title('Backtest Analysis')
-
+    # -------------------------------------
+    days_forward_list = [5, 10, 20, 30]
+    # ------------------------------------
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        df = process_data(df)
+        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y')
 
+        df = backtest(df, days_forward_list)
+
+        df = process_data(df, days_forward_list)
         st.subheader('Data Preview')
         st.write(df.head())
 
@@ -93,29 +144,7 @@ def main():
         st.plotly_chart(marketcap_fig)
 
         st.subheader('Analysis Report')
-        st.write("""
-        This analysis report provides insights into the performance of the scanner across different sectors and market capitalizations.
 
-        1. Sector Performance:
-           - The bar chart shows the average percentage change for highs and lows across different time periods (5, 10, 20, and 30 days) for each sector.
-           - Sectors with higher positive bars for 'High' indicate better performance in terms of price increases.
-           - Sectors with lower negative bars for 'Low' indicate better performance in terms of minimizing price decreases.
-
-        2. Market Cap Performance:
-           - Similar to the sector analysis, this chart shows the average percentage change for highs and lows across different time periods for each market cap category.
-           - This helps identify which market cap segments (e.g., Large Cap, Mid Cap) tend to perform better with this scanner.
-
-        3. Interpretation:
-           - Look for sectors and market cap categories with consistently high positive changes for 'High' bars and minimal negative changes for 'Low' bars.
-           - These represent areas where the scanner seems to be most effective in identifying stocks with potential for price increases and limited downside.
-
-        4. Recommendations:
-           - Focus on sectors and market cap categories that show the best overall performance.
-           - Consider adjusting the scanner parameters or creating separate scanners optimized for the top-performing sectors or market caps.
-           - Regularly update this analysis as new data becomes available to track changes in performance over time.
-
-        Remember that past performance doesn't guarantee future results, and always combine these insights with other forms of analysis and risk management strategies.
-        """)
 
 
 if __name__ == "__main__":
