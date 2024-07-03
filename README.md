@@ -1,8 +1,9 @@
-![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/6dc95e10-4919-43de-973b-98b7f74a2171)
-
-![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/684f7595-512a-4655-8e89-b8352a2c5e74)
-
-![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/21ae4d56-c79d-4c67-904f-b96aeda705d4)
+```
+pip install -r requirements.txt
+```
+```
+streamplit run app.py
+```
 
 Analysis Report
 This analysis report provides insights into the performance of the scanner across different sectors and market capitalizations.
@@ -26,3 +27,9 @@ Focus on sectors and market cap categories that show the best overall performanc
 Consider adjusting the scanner parameters or creating separate scanners optimized for the top-performing sectors or market caps.
 Regularly update this analysis as new data becomes available to track changes in performance over time.
 Remember that past performance doesn't guarantee future results, and always combine these insights with other forms of analysis and risk management strategies.
+
+![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/6dc95e10-4919-43de-973b-98b7f74a2171)
+
+![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/684f7595-512a-4655-8e89-b8352a2c5e74)
+
+![image](https://github.com/bbmusa/chartink-backtestor/assets/65719349/21ae4d56-c79d-4c67-904f-b96aeda705d4)
